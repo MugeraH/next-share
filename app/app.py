@@ -1,7 +1,16 @@
 from fastapi import FastAPI,HTTPException
 from app.schemas import PostCreate,PostResponse
+from app.db import Post,create_db_and_tables,get_async_session
+from sqlalchemy.ext.asyncio import AsyncSession
+from contextlib import asynccontextmanager
 
-app= FastAPI()
+
+@asynccontextmanager
+async def lifespan(app:FastAPI):
+    await create_db_and_tables()
+    yield
+
+app= FastAPI(lifespan=lifespan)
 
 text_posts={
     1: {"title": "The Future of Remote Work", "content": "Remote work has transformed how we approach productivity and work-life balance. Companies are discovering that flexible arrangements often lead to increased employee satisfaction and better results. The key is finding the right balance between autonomy and collaboration."},
