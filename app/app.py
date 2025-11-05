@@ -1,5 +1,5 @@
 from fastapi import FastAPI,HTTPException
-from app.schemas import PostCreate
+from app.schemas import PostCreate,PostResponse
 
 app= FastAPI()
 
@@ -17,22 +17,39 @@ text_posts={
 }
 
 @app.get("/posts")
-def get_all_posts(limit:int=None):
+def get_all_posts(limit:int=None)->list[PostResponse]:
+    posts_list = [PostResponse(**post) for post in text_posts.values()]
     if limit:
-        return list(text_posts.values())[:limit]
-    return text_posts
+        return posts_list[:limit]
+    return posts_list
 
 
 @app.get("/posts/{id}")
-def get_post(id: int):
+def get_post(id: int)->PostResponse:
     if id not in text_posts:
         raise HTTPException(status_code=404,detail="Post not found")
+    return PostResponse(**text_posts[id])
     return text_posts[id]
 
 
 
 @app.post("/posts")
-def create_post(post: PostCreate):
+def create_post(post: PostCreate)-> PostResponse:
     new_post = {"title": post.title, "content": post.content}
     text_posts[max(text_posts.keys())+1]=new_post
     return new_post
+
+@app.put("/posts/{id}")
+def update_post(id: int, post: PostCreate):
+    if id not in text_posts:
+        raise HTTPException(status_code=404,detail="Post not found")
+    text_posts[id] = {"title": post.title, "content": post.content}
+    return text_posts[id]
+
+
+@app.delete("/posts/{id}")
+def delete_post(id: int):
+    if id not in text_posts:
+        raise HTTPException(status_code=404,detail="Post not found")
+    del text_posts[id]
+    return {"message": "Post deleted successfully"}
